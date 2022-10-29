@@ -6,3 +6,5 @@ rsa_assign1.o
 dh_assign1.o
 rsa_assign1
 dh_assign1
+input.txt
+output.txt

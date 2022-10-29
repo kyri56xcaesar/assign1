@@ -22,7 +22,3 @@ clean:
 	
 
 
-
-#CC=gcc
-#CFLAGS = -lm -I -g -Wall
-#TARGET = dh_assign_1 rsa_assign_1 unit_testing

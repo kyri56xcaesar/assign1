@@ -44,8 +44,10 @@ char *out;
 char *k;
 
 void key_generation();
-void encrypt();
-void decrypt();
+void encryption();
+void decryption();
+char* encrypt(char *plaintext, unsigned long int puKey, unsigned long int n);
+char* decrypt(char *cipher, unsigned long int prKey, unsigned long int n);
 
 void HELP();
 
@@ -99,13 +101,13 @@ int main(int argv, char *argc[])
 
             if (argc[i][1] == 'd' && (in != NULL || out != NULL || k != NULL))
             {
-                decrypt();
+                decryption();
             }
 
 
             if (argc[i][1] == 'e' && (in != NULL || out != NULL || k != NULL))
             {
-                encrypt();
+                encryption();
             }
 
         }
@@ -132,8 +134,11 @@ void key_generation()
     // n = p * q
     mpz_init(n);
 
-    large_prime_generator(p, 20);
-    large_prime_generator(q, 15);
+
+    mpz_set_ui(p, 61);
+    mpz_set_ui(q, 53);
+    //large_prime_generator(p, 20);
+    //large_prime_generator(q, 15);
 
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
@@ -145,19 +150,27 @@ void key_generation()
     mpz_init(lambda);
     lambda_function(lambda, p, q);
 
+    printf("Lambda: ");
+    mpz_out_str(stdout, 10, lambda);
+    printf("\n");
+
     // Need to choose a prime "e" where e%lambda(n) != 0 && (gcd(e, lambda) == 1)
     // 1 < e < lambda
 
     // @todo GENERATE e value.
 
     mpz_init(e);
-    mpz_set_ui(e, 65537);
+    mpz_set_ui(e, 17);
 
     // Calculate d : modular inverse of(e, lambda)
 
 
     mpz_init(d);
     mpz_powm_ui(d, e, -1, lambda);
+
+    printf("d: ");
+    mpz_out_str(stdout, 10, d);
+    printf("\n");
     // public key: (n, d)
     // private key: (n, e)
 
@@ -191,14 +204,155 @@ void key_generation()
     
 }
 
-void encrypt()
+void encryption()
 {
+    FILE* fin;
 
+    fin = fopen(k, "r");
+
+    char buffer[500];
+    char n[200];
+    char e[200];
+    char ch;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int n_flag1 = 1;
+    int n_flag2 = 0;
+
+
+    while ((ch = fgetc(fin)) != EOF)
+    {
+        if (ch != EOF)
+        {
+            buffer[i++] = ch;
+        
+          
+            if (ch == ',')
+            {
+                n_flag1 = 0;
+                n_flag2 = 1;
+            }
+            else if (ch == ')')
+            {
+                n_flag1 = 0;
+                n_flag2 = 0;
+            }
+            if (n_flag1 && ch != '(')
+            {
+                n[j++] = ch;
+            }   
+            if (n_flag2)
+            {
+                e[k++] = ch;
+            } 
+        }
+    }
+    printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, e);
+    fclose(fin);
+
+
+
+    // encrypt.
+
+    char* cipher = encrypt();
+
+
+    FILE* fout;
+    fout = fopen(out, "w");
+    
+    
+    fclose(fout);
 }
 
-void decrypt()
+char* encrypt(char *plaintext, unsigned long int puKey, unsigned long int n)
 {
+    int size = sizeof(plaintext)/sizeof(plaintext[0]);
+    int i;
 
+    char cipher[size];
+
+    for (i = 0; i < size; i ++)
+    {
+        cipher[i] = plaintext[i]^puKey % n;
+    }
+
+    return cipher;
+}
+char* decrypt(char *cipher, unsigned long int prKey, unsigned long int n)
+{
+    int size = sizeof(cipher)/sizeof(cipher[0]);
+    int i;
+
+    char plaintext[size];
+
+    for (i = 0; i < size; i ++)
+    {
+        plaintext[i] = cipher[i]^prKey % n;
+    }
+
+    return cipher;
+}
+void decryption()
+{
+    FILE* fin;
+
+    fin = fopen(k, "r");
+
+    char buffer[2400];
+    char n[1600];
+    char e[1600];
+    char ch;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int n_flag1 = 1;
+    int n_flag2 = 0;
+
+
+    while ((ch = fgetc(fin)) != EOF)
+    {
+        if (ch != EOF)
+        {
+            buffer[i++] = ch;
+        
+          
+            if (ch == ',')
+            {
+                n_flag1 = 0;
+                n_flag2 = 1;
+            }
+            else if (ch == ')')
+            {
+                n_flag1 = 0;
+                n_flag2 = 0;
+            }
+            if (n_flag1 && ch != '(')
+            {
+                n[j++] = ch;
+            }   
+            if (n_flag2)
+            {
+                e[k++] = ch;
+            }
+
+        }
+    }
+    printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, e);
+    fclose(fin);
+
+
+
+    // decrypt.
+
+    char plain_text[200];
+
+
+    FILE* fout;
+    fout = fopen(out, "w");
+    
+    
+    fclose(fout);
 }
 
 
