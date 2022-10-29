@@ -1,31 +1,28 @@
 CC=gcc
-CFLAGS=-lm -I -g -Wall 
-TARGET = dh_assign_1 rsa_assign_1
+CFLAGS=-lm -I -g -Wall -lgmp
+DEPS = util.o
+TARGET = dh_assign_1 rsa_assign_1 unit_testing
 
 all: $(TARGET)
 
-#$(TARGET): $(TARGET).c
-#	$(CC) -o $@ $^ $(CFLAGS)
-dh_assign_1: dh_assign_1.o
+
+dh_assign_1: $(DEPS) dh_assign_1.o
 	$(CC) $^ -o $@ $(CFLAGS)
 
-rsa_assign_1: dh_assign_1.o
+rsa_assign_1: $(DEPS) rsa_assign_1.o
+	$(CC) $^ -o $@ $(CFLAGS) 
+
+
+unit_testing: $(DEPS) unit_testing.o
 	$(CC) $^ -o $@ $(CFLAGS)
 
 clean:
 	$(RM) $(TARGET)
-	$(RM) *.txt *.o
+	$(RM) -f *.txt *.o dh_assign_1 rsa_assign_1 unit_testing
 	
 
 
-#
-#all: dh_assign_1 rsa_assign_1
-#
-#dh_assign_1:
-#	gcc -Wall -o dh_assign_1 dh_assign_1.c
-#
-#rsa_assign_1:
-#	gcc -Wall -o rsa_assign_1 rsa_assign_1.c
-#
-#clean:
-#	$(RM) *.txt
+
+#CC=gcc
+#CFLAGS = -lm -I -g -Wall
+#TARGET = dh_assign_1 rsa_assign_1 unit_testing

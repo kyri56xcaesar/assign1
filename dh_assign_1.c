@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "util.h"
 
 /*
  * Prime numbers p and g (g previous prime from p)
@@ -35,7 +36,6 @@ long long int B;
 long long int KEY;
 
 
-int checkIfPrimitiveRoot(long long int a, long long int b);
 long long int createPublicKey(long long int key);
 long long int discoverSecret(long long int pKey, long long int sKey);
 
@@ -153,22 +153,7 @@ int main(int argv, char* argc[])
     return 0;
 }
 
-int checkIfPrimitiveRoot(long long int a, long long int b)
-{
-    int i;
 
-    for (i = 1; i <= a; i++)
-    {
-        int x = fmod(pow(b, i), a);
-        //printf("%lld ^ %d mod %lld = %d --> %d --> IsEqual: %d\n", b, i, a, x, (int)fmod(x, a), x == (int)fmod(x, a));
-        if (x != (int)fmod(x, a))
-        {
-            return 0;
-        }
-    }
-
-    return 1;
-}
 
 long long int discoverSecret(long long int pKey, long long int sKey)
 {
