@@ -18,7 +18,7 @@ unit_testing: $(DEPS) unit_testing.o
 
 clean:
 	$(RM) $(TARGET)
-	$(RM) -f *.txt *.o dh_assign_1 rsa_assign_1 unit_testing
+	$(RM) -f *.txt *.o *.key dh_assign_1 rsa_assign_1 unit_testing
 	
 
 

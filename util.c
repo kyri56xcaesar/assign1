@@ -169,7 +169,7 @@ int validate_primality(mpz_t num_b)
     mpz_init(exp);
     mpz_sub_ui(exp, num_b, 1);
     mpz_cdiv_q_ui(exp, exp, 2);
-    mpz_powm(x, rnd_a, exp,num_b);
+    mpz_powm(x, rnd_a, exp, num_b);
     conditionJ = mpz_cmp_ui(x, jacobi) == 0;
 
 
@@ -182,9 +182,41 @@ int validate_primality(mpz_t num_b)
     return conditionD && conditionJ;
 
 
+}
+
+void lambda_function(mpz_t l, mpz_t p, mpz_t q)
+{
+    // λ(n) = lcm(p - 1,q - 1)
+    // lcm(a,b)=|ab|/gcd(a,b)
+   
+    // λ(n) = |(p-1)(q-1)| / gcd(a,b)
+
+    // setup p - 1
+    mpz_t p_1;
+    mpz_init(p_1);
+    mpz_sub_ui(p_1, p, 1);
+
+    // setup q - 1
+    mpz_t q_1;
+    mpz_init(q_1);
+    mpz_sub_ui(q_1, q, 1);
     
-    
+    // setup |(p-1)(q-1)|
+    mpz_t abs_pq;
+    mpz_init(abs_pq);
+    mpz_mul(abs_pq, p_1, q_1);
+
+    // setupd gcd(p-1, q-1)
+    mpz_t gcd;
+    mpz_init(gcd);
+    mpz_gcd(gcd, p_1, q_1);
 
 
+    mpz_cdiv_q(l, abs_pq, gcd);
+
+    mpz_clear(gcd);
+    mpz_clear(abs_pq);
+    mpz_clear(p_1);
+    mpz_clear(q_1);
 
 }

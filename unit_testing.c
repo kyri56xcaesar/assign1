@@ -94,13 +94,13 @@ int main(void)
     mpz_init(gcd);
     mpz_gcd(gcd, a1, b1);
     
-    printf("\n\tNumber a:\n\t");
+    printf("\n\tNumber a:\t");
     mpz_out_str(stdout, 10, a1);
-    printf("\n\n\tNumber b:\n\t");
+    printf("\n\n\tNumber b:\t");
     mpz_out_str(stdout, 10, b1);
-    printf("\n\tGCD: \t");
+    printf("\n\n\tGCD: \t");
     mpz_out_str(stdout, 10, gcd);
-    printf("\n\tgcd == 1 ?: %d\n\t",mpz_cmp_ui(gcd, 1) == 0);
+    printf("\n\n\tgcd == 1 ?: %d\n\t",mpz_cmp_ui(gcd, 1) == 0);
 
    
     mpz_clear(gcd);
@@ -130,7 +130,18 @@ int main(void)
     printf("\n\n\tJACOBI: %d \n\t", jacobi);
     printf("\n\tx == jacobi \t :?: %d\n\t", mpz_cmp_ui(x, jacobi) == 0);
 
-    
+
+
+    printf("\n\nTESTING LAMBDA FUNCTION...\n");
+    printf("-------------------------\n\n\n\t");
+
+
+    printf("\n\nTESTING e generation...\n");
+    printf("-------------------------\n\n\n\t");
+
+    printf("\n\nTESTING d calculation...\n");
+    printf("-------------------------\n\n\n\t");
+
 
 
 

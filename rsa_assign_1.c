@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gmp.h>
+#include "util.h"
 
 
 /*
@@ -34,17 +35,23 @@ Options:
 
 */
 
+mpz_t n;
+mpz_t d;
+mpz_t e;
+
 char *in;
 char *out;
 char *k;
 
 void key_generation();
+void encrypt();
+void decrypt();
 
 void HELP();
 
 int main(int argv, char *argc[])
 {
-    if (argv < 2 || in == NULL || out == NULL || k ==NULL)
+    if (argv < 2)
     {
         HELP();
 
@@ -63,11 +70,10 @@ int main(int argv, char *argc[])
         }
     }
 
-    for (i = 1; i < argv - 1; i++)
+    for (i = 1; i < argv; i++)
     {
         if (argc[i][0] == '-')
         {
-
             if (argc[i][1] == 'i')
             {
                 in = argc[i + 1];
@@ -86,18 +92,20 @@ int main(int argv, char *argc[])
             if (argc[i][1] == 'g')
             {
                 // perform key pair generation
+                printf("Preparing keys...\n\n\n");
                 key_generation();
+                printf("Keys ready.\n");
             }
 
-            if (argc[i][1] == 'd')
+            if (argc[i][1] == 'd' && (in != NULL || out != NULL || k != NULL))
             {
-                // decrypt
+                decrypt();
             }
 
 
-            if (argc[i][1] == 'e')
+            if (argc[i][1] == 'e' && (in != NULL || out != NULL || k != NULL))
             {
-                // encrypt.
+                encrypt();
             }
 
         }
@@ -105,6 +113,10 @@ int main(int argv, char *argc[])
     }
 
       
+
+    mpz_clear(n);
+    mpz_clear(d);
+    mpz_clear(e);
 
     return 0;
 }
@@ -118,25 +130,75 @@ void key_generation()
     mpz_init(q);
 
     // n = p * q
-    mpz_t n;
     mpz_init(n);
+
+    large_prime_generator(p, 20);
+    large_prime_generator(q, 15);
 
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
 
-
     // Need to calculate lambda(n)
+    // λ(n) = lcm(p - 1,q - 1)
+    // lcm(a,b)=|ab|/gcd(a,b)
+    mpz_t lambda;
+    mpz_init(lambda);
+    lambda_function(lambda, p, q);
 
     // Need to choose a prime "e" where e%lambda(n) != 0 && (gcd(e, lambda) == 1)
-    // Choose d : modular inverse of(e, lambda)
+    // 1 < e < lambda
 
+    // @todo GENERATE e value.
+
+    mpz_init(e);
+    mpz_set_ui(e, 65537);
+
+    // Calculate d : modular inverse of(e, lambda)
+
+
+    mpz_init(d);
+    mpz_powm_ui(d, e, -1, lambda);
     // public key: (n, d)
     // private key: (n, e)
 
 
     mpz_clear(p);
     mpz_clear(q);
+    mpz_clear(lambda);
+
+
+    FILE *fp1;
+    FILE *fp2;
+    fp1 = fopen("public.key", "w");
+    fp2 = fopen("private.key", "w");
+
+    fprintf(fp1, "(");
+    mpz_out_str(fp1, 16, n);
+    fprintf(fp1,",");
+    mpz_out_str(fp1, 16, d);
+    fprintf(fp1,")");
+    fflush(fp1);
     
+    fprintf(fp2, "(");
+    mpz_out_str(fp2, 16, n);
+    fprintf(fp2,",");
+    mpz_out_str(fp2, 16, e);
+    fprintf(fp2,")");
+    fflush(fp2);
+    
+    fclose(fp1);
+    fclose(fp2);
+    
+}
+
+void encrypt()
+{
+
+}
+
+void decrypt()
+{
+
 }
 
 

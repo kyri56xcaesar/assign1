@@ -24,3 +24,4 @@ int checkIfPrime(size_t n);
 size_t gcd(size_t a, size_t b);
 
 void large_prime_generator(mpz_t prime, int digits);
+void lambda_function(mpz_t lambda, mpz_t p, mpz_t q);
