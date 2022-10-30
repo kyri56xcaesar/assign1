@@ -43,17 +43,20 @@ char *in;
 char *out;
 char *k;
 
+void print_cipher(size_t *cihper, int size);
+void write_cipher(size_t *cipher, int size, char *out);
 void destruct();
 void key_generation();
 void encryption();
 void decryption();
-char* encrypt(char *plaintext, unsigned long int puKey, unsigned long int n);
-char* decrypt(char *cipher, unsigned long int prKey, unsigned long int n);
+size_t* encrypt(char *plaintext, size_t size, mpz_t puKey, mpz_t n);
+char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n);
 
 void HELP();
 
 int main(int argv, char *argc[])
 {
+
     if (argv < 2)
     {
         HELP();
@@ -106,7 +109,7 @@ int main(int argv, char *argc[])
                     decryption();
                 else
                 {
-                    printf("Must obtain a private key in order to decrypt!.");
+                    printf("Must obtain a private key in order to decrypt!.\n");
 
                     destruct();
                 }
@@ -121,7 +124,7 @@ int main(int argv, char *argc[])
                     encryption();
                 else
                 {
-                    printf("Must obtain a public key in order to decrypt!.");
+                    printf("Must obtain a public key in order to ecnrypt!.\n");
 
                     destruct();
                 }
@@ -161,20 +164,42 @@ void key_generation()
     // n = p * q
     mpz_init(n);
 
-
-    // mpz_set_ui(p, 3);
-    // mpz_set_ui(q, 5);
     //large_prime_generator(p, 20);
     //large_prime_generator(q, 15);
 
     // prompt user for primes:
-    printf("Enter a prime number p: ");
-    mpz_inp_str(p, stdin, 10);
-    printf("\nEnter a prime number q: ");
-    mpz_inp_str(q, stdin, 10);
+    int cs =0;
+    while(cs == 0)
+    {
+        printf("Enter a prime number p: ");
+        mpz_inp_str(p, stdin, 10);
+    
+        cs = mpz_probab_prime_p(p, 20);
+        if (cs ==0)
+        {
+            printf("\nNot a prime. Pick again.\n");
+        }
+    }
+    cs = 0;
+    while(cs == 0)
+    {
+     
+        printf("\nEnter a prime number q: ");
+        mpz_inp_str(q, stdin, 10);   
+        cs = mpz_probab_prime_p(q, 20);
+        if (cs == 0)
+        {
+            printf("\nNot a prime. Pick again");
+        }
+    }
+    printf("\n");
 
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
+
+    printf("\nn: ");
+    mpz_out_str(stdout, 10, n);
+    printf("\n");
 
 
     // Calculate lambda euler func.
@@ -186,12 +211,16 @@ void key_generation()
     // Choose an e. Prime and larger than lambda.
     mpz_init(e);   
     forge_e_iteratively(e, lambda);
-
+    printf("\ne: ");
+    mpz_out_str(stdout, 10, e);
+    printf("\n");
   
     // Calculate d : modular inverse of(e, lambda)
     mpz_init(d);
     mpz_invert(d, e, lambda);
-
+    printf("\nd: ");
+    mpz_out_str(stdout, 10, d);
+    printf("\n");
 
     // public key: (n, d)
     // private key: (n, e)
@@ -206,18 +235,24 @@ void key_generation()
     FILE *fp2;
     fp1 = fopen("public.key", "w");
     fp2 = fopen("private.key", "w");
+    if (fp1 == NULL|| fp2 == NULL)
+    {
+        printf("Error opening a file. Program will now terminate...\n");
+
+        exit(1);
+    }
 
     fprintf(fp1, "(");
-    mpz_out_str(fp1, 16, n);
+    mpz_out_str(fp1, 10, n);
     fprintf(fp1,",");
-    mpz_out_str(fp1, 16, d);
+    mpz_out_str(fp1, 10, d);
     fprintf(fp1,")");
     fflush(fp1);
     
     fprintf(fp2, "(");
-    mpz_out_str(fp2, 16, n);
+    mpz_out_str(fp2, 10, n);
     fprintf(fp2,",");
-    mpz_out_str(fp2, 16, e);
+    mpz_out_str(fp2, 10, e);
     fprintf(fp2,")");
     fflush(fp2);
     
@@ -231,18 +266,22 @@ void encryption()
     FILE* fk;
 
     fk = fopen(k, "r");
+    if (fk == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        exit(1);
+    }
 
 
     // Fetch the keys.
     char buffer[500];
-    char n[200];
-    char e[200];
+    char *n;
+    char *e;
     char ch;
     int i = 0;
     int j = 0;
     int k = 0;
-    int n_flag1 = 1;
-    int n_flag2 = 0;
 
 
     while ((ch = fgetc(fk)) != EOF)
@@ -250,31 +289,41 @@ void encryption()
         if (ch != EOF)
         {
             buffer[i++] = ch;
-        
-          
+
             if (ch == ',')
             {
-                n_flag1 = 0;
-                n_flag2 = 1;
+                n = (char*)malloc(sizeof(char)*i);
+
+                int c = 0;
+                for (j = 0; j < i - 1; j++)
+                {
+                    if (buffer[j] != '(' && buffer[j] != ',')
+                    {
+                        n[c++] = buffer[j];
+                    }
+                }
+
             }
             else if (ch == ')')
             {
-                n_flag1 = 0;
-                n_flag2 = 0;
+                e = (char*)malloc(sizeof(char)*(i-j));
+                
+                int b = 0;
+                for (k = 0; k < i - j; k++)
+                {
+                    if (buffer[j + k] != ',' && buffer[j + k] != ')')
+                    {
+                        e[b++] = buffer[j + k];
+                    }
+                }
+
+                break;
             }
-            if (n_flag1 && ch != '(')
-            {
-                n[j++] = ch;
-            }   
-            if (n_flag2)
-            {
-                e[k++] = ch;
-            } 
         }
     }
 
     // print keys
-    printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, e);
+    printf("buffer: %s\nn: %s\ne: %s\n", buffer, n, e);
     fclose(fk);
 
 
@@ -282,6 +331,14 @@ void encryption()
     FILE* fin;
 
     fin = fopen(in, "r");
+    if (fin == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        exit(1);
+    }
+
+
     char plaintext[200];
     char c;
     i = 0;
@@ -293,74 +350,142 @@ void encryption()
             plaintext[i++] = c;
         }
     }
+    i--;
 
     // print plaintext
-    printf("PLAINTEXT:\n%s", plaintext);
+    printf("PLAINTEXT: %s", plaintext);
     fclose(fin);
 
+    printf("Size of plain text is: %d\n", i);
+
+    // create mpz_t numbers;
+    mpz_t ekey;
+    mpz_t nkey;
+
+    mpz_init(ekey);
+    mpz_init(nkey);
+
+    mpz_set_str(ekey, e, 10);
+    mpz_set_str(nkey, n, 10);
 
     // encrypt.
-    //char* cipher = encrypt();
+    size_t* cipher = encrypt(plaintext, i, ekey, nkey);
 
 
-    FILE* fout;
-    fout = fopen(out, "w");
+   
     
     // print cipher
     //printf("CIPHER:\n%s", cipher);
+    int size = i;
+    print_cipher(cipher, size);
 
+    // write cipher to file
     //fprintf(fout, "%s", cipher);
+    write_cipher(cipher, size, out);
 
-    //free(cipher);
 
+    mpz_clear(nkey);
+    mpz_clear(ekey);
+    free(cipher);
+    free(e);
+    free(n);
     fflush(stdout);
-    fclose(fout);
+ 
 }
 
-char* encrypt(char *plaintext, unsigned long int puKey, unsigned long int n)
+void print_cipher(size_t *cipher, int size)
 {
-    int size = sizeof(plaintext)/sizeof(plaintext[0]);
     int i;
 
-    char cipher[size];
+    for (i = 0; i < size; i++)
+    {
+        printf("%lu ", cipher[i]);
+    }
+
+    printf("\n");
+}
+
+void write_cipher(size_t *cipher, int size, char *file)
+{
+    FILE *fp;
+
+    fp = fopen(file, "w");
+    if (fp == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        exit(1);
+    }
+
+    int i;
+
+    for (i = 0; i < size; i++)
+    {
+        fprintf(fp, "%ld", cipher[i]);
+    }
+}
+
+size_t* encrypt(char *plaintext, size_t size, mpz_t puKey, mpz_t n)
+{
+    if (plaintext == NULL)
+    {
+        return NULL;
+    }
+
+    int i;
+
+    size_t* cipher = (size_t *)malloc(sizeof(size_t) * size);
+    size_t e = mpz_get_ui(puKey);
+    size_t nn = mpz_get_ui(n);
+    
 
     for (i = 0; i < size; i ++)
     {
-        cipher[i] = plaintext[i]^puKey % n;
+        cipher[i] = fmod(pow(plaintext[i], e), nn);
     }
 
     return cipher;
 }
-char* decrypt(char *cipher, unsigned long int prKey, unsigned long int n)
+
+char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n)
 {
-    int size = sizeof(cipher)/sizeof(cipher[0]);
+    if (cipher == NULL)
+    {
+        return NULL;
+    }
+
     int i;
 
-    char plaintext[size];
+    char* plaintext = (char*)malloc(sizeof(char) *size/8);
 
     for (i = 0; i < size; i ++)
     {
-        plaintext[i] = cipher[i]^prKey % n;
+        //plaintext[i] = cipher[i]^prKey % n;
     }
 
-    return cipher;
+    return plaintext;
 }
 void decryption()
-{FILE* fk;
+{
+    FILE* fk;
 
     fk = fopen(k, "r");
+    if (fk == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        exit(1);
+    }
 
 
     // Fetch the keys.
-    char buffer[512];
-    char n[256];
-    char d[256];
+    char buffer[500];
+    char *n;
+    char *d;
     char ch;
     int i = 0;
     int j = 0;
     int k = 0;
-    int n_flag1 = 1;
-    int n_flag2 = 0;
 
 
     while ((ch = fgetc(fk)) != EOF)
@@ -368,39 +493,56 @@ void decryption()
         if (ch != EOF)
         {
             buffer[i++] = ch;
-        
-          
+
             if (ch == ',')
             {
-                n_flag1 = 0;
-                n_flag2 = 1;
+                n = (char*)malloc(sizeof(char)*i);
+
+                int c = 0;
+                for (j = 0; j < i - 1; j++)
+                {
+                    if (buffer[j] != '(' && buffer[j] != ',')
+                    {
+                        n[c++] = buffer[j];
+                    }
+                }
+
             }
             else if (ch == ')')
             {
-                n_flag1 = 0;
-                n_flag2 = 0;
+                d = (char*)malloc(sizeof(char)*(i-j));
+                
+                int b = 0;
+                for (k = 0; k < i - j; k++)
+                {
+                    if (buffer[j + k] != ',' && buffer[j + k] != ')')
+                    {
+                        d[b++] = buffer[j + k];
+                    }
+                }
+
+                break;
             }
-            if (n_flag1 && ch != '(')
-            {
-                n[j++] = ch;
-            }   
-            if (n_flag2)
-            {
-                d[k++] = ch;
-            } 
         }
     }
 
     // print keys
-    printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, d);
+    printf("buffer: %s\nn: %s\ne: %s\n", buffer, n, d);
     fclose(fk);
 
 
-    // Fetch the plain_text from input.
+    // Fetch the cipher from input.
     FILE* fin;
 
     fin = fopen(in, "r");
-    char cipher[200];
+    if (fin == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        exit(1);
+    }
+
+    size_t cipher[200];
     char c;
     i = 0;
 
@@ -411,26 +553,47 @@ void decryption()
             cipher[i++] = c;
         }
     }
+    cipher[i] = '\0';
 
-    // print plaintext
-    printf("PLAINTEXT:\n%s", cipher);
+    // print cipher
+    //printf("CIPHER: %s", cipher);
     fclose(fin);
 
 
+    // create mpz_t numbers;
+    mpz_t dkey;
+    mpz_t nkey;
+
+    mpz_init(dkey);
+    mpz_init(nkey);
+
+    mpz_set_str(dkey, d, 10);
+    mpz_set_str(nkey, n, 10);
+
     // encrypt.
-    //char* plaintext = decrypt();
+    char* plaintext = decrypt(cipher, i, dkey, nkey);
 
 
     FILE* fout;
     fout = fopen(out, "w");
+    if (fout == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        exit(1);
+    }
     
     // print cipher
-    //printf("CIPHER:\n%s", plaintext);
+    printf("PLAINTEXT:\n%s", plaintext);
 
-    //fprintf(fout, "%s", plaintext);
+    fprintf(fout, "%s", plaintext);
 
-    //free(plaintext);
 
+    mpz_clear(nkey);
+    mpz_clear(dkey);
+    free(plaintext);
+    free(d);
+    free(n);
     fflush(stdout);
     fclose(fout);
 }
