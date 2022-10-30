@@ -245,14 +245,14 @@ void key_generation()
     fprintf(fp1, "(");
     mpz_out_str(fp1, 10, n);
     fprintf(fp1,",");
-    mpz_out_str(fp1, 10, d);
+    mpz_out_str(fp1, 10, e);
     fprintf(fp1,")");
     fflush(fp1);
     
     fprintf(fp2, "(");
     mpz_out_str(fp2, 10, n);
     fprintf(fp2,",");
-    mpz_out_str(fp2, 10, e);
+    mpz_out_str(fp2, 10, d);
     fprintf(fp2,")");
     fflush(fp2);
     
@@ -435,14 +435,23 @@ size_t* encrypt(char *plaintext, size_t size, mpz_t puKey, mpz_t n)
     int i;
 
     size_t* cipher = (size_t *)malloc(sizeof(size_t) * size);
-    size_t e = mpz_get_ui(puKey);
-    size_t nn = mpz_get_ui(n);
     
+    mpz_t ch;
+    mpz_init(ch);
+    mpz_t powm;
+    mpz_init(powm);
+
 
     for (i = 0; i < size; i ++)
     {
-        cipher[i] = fmod(pow(plaintext[i], e), nn);
+        mpz_set_ui(ch, plaintext[i]);
+        mpz_powm(powm, ch, puKey, n);
+        cipher[i] = mpz_get_ui(powm);
+
     }
+
+    mpz_clear(ch);
+    mpz_clear(powm);
 
     return cipher;
 }
@@ -457,10 +466,19 @@ char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n)
     int i;
 
     char* plaintext = (char*)malloc(sizeof(char) *size/8);
+   
+    mpz_t ch;
+    mpz_init(ch);
+    mpz_t powm;
+    mpz_init(powm);
+
 
     for (i = 0; i < size; i ++)
     {
-        //plaintext[i] = cipher[i]^prKey % n;
+        mpz_set_ui(ch, cipher[i]);
+        mpz_powm(powm, ch, prKey, n);
+        cipher[i] = mpz_get_ui(powm);
+        //plaintext[i] = (char)fmod(pow(cipher[i], d), nn);
     }
 
     return plaintext;
@@ -553,10 +571,7 @@ void decryption()
             cipher[i++] = c;
         }
     }
-    cipher[i] = '\0';
-
-    // print cipher
-    //printf("CIPHER: %s", cipher);
+    
     fclose(fin);
 
 
