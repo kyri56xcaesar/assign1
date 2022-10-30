@@ -220,3 +220,97 @@ void lambda_function(mpz_t l, mpz_t p, mpz_t q)
     mpz_clear(q_1);
 
 }
+
+void lambda_euler_function(mpz_t l, mpz_t p, mpz_t q)
+{
+    // λ(n) = lcm(p - 1,q - 1)
+    // lcm(a,b)=|ab|/gcd(a,b)
+   
+    // λ(n) = |(p-1)(q-1)| / gcd(a,b)
+
+    // setup p - 1
+    mpz_t p_1;
+    mpz_init(p_1);
+    mpz_sub_ui(p_1, p, 1);
+
+    // setup q - 1
+    mpz_t q_1;
+    mpz_init(q_1);
+    mpz_sub_ui(q_1, q, 1);
+    
+    // setup |(p-1)(q-1)|
+    mpz_mul(l, p_1, q_1);
+
+ 
+
+
+    mpz_clear(p_1);
+    mpz_clear(q_1);
+
+}
+
+void forge_e_iteratively(mpz_t e, mpz_t lambda)
+{
+    // Searching for a large number e which is relatively prime to lambda
+    // tmp value to hold e
+    mpz_t tmp;
+    mpz_init(tmp);
+    
+    // Prerquisites are e % lambda != 0 && gcd(e, lambda)==1 
+    // e mod lambda
+    mpz_t mod;
+    mpz_init(mod);
+
+    // gcd (e, lambda)
+    mpz_t gcd;
+    mpz_init(gcd);
+
+
+
+    // iterator index. Iterate max lambda times!
+    unsigned long int i;
+
+    // Recieve a prime double of lambda.
+    mpz_t op;
+    mpz_init(op);
+
+
+    mpz_mul_ui(op, lambda, 2);
+  
+
+    
+    for (i = 1;  mpz_cmp_ui(lambda, i) > 0 ;i++)
+    {
+        // get a larger prime
+        mpz_nextprime(tmp, op);
+
+        // evaluate mod
+        mpz_mod(mod, tmp, lambda);
+   
+        // evaluate gcd
+        mpz_gcd(gcd, tmp, lambda);
+   
+        // check conditions
+        int mod_is_not_zero = mpz_cmp_ui(mod, 0);
+        int gcd_is_one = mpz_cmp_ui(gcd, 1);
+
+        // if conditions are met set e and return
+        if (mod_is_not_zero != 0 &&  gcd_is_one== 0)
+        {
+
+            mpz_set(e, tmp);
+       
+            break;
+        }
+        // If conditions are not met
+        // set operator to be current tmp in order to get a next prime
+        mpz_set(op, tmp);
+    
+
+    }
+    // Clear data.
+    mpz_clear(tmp);
+    mpz_clear(mod);
+    mpz_clear(gcd);
+    mpz_clear(op);
+}

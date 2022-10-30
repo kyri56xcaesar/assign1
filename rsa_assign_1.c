@@ -43,6 +43,7 @@ char *in;
 char *out;
 char *k;
 
+void destruct();
 void key_generation();
 void encryption();
 void decryption();
@@ -101,13 +102,29 @@ int main(int argv, char *argc[])
 
             if (argc[i][1] == 'd' && (in != NULL || out != NULL || k != NULL))
             {
-                decryption();
+                if (k[1] == 'r')
+                    decryption();
+                else
+                {
+                    printf("Must obtain a private key in order to decrypt!.");
+
+                    destruct();
+                }
+                
+
             }
 
 
             if (argc[i][1] == 'e' && (in != NULL || out != NULL || k != NULL))
             {
-                encryption();
+                if (k[1] == 'u')
+                    encryption();
+                else
+                {
+                    printf("Must obtain a public key in order to decrypt!.");
+
+                    destruct();
+                }
             }
 
         }
@@ -123,6 +140,16 @@ int main(int argv, char *argc[])
     return 0;
 }
 
+void destruct()
+{
+    mpz_clear(n);
+    mpz_clear(d);
+    mpz_clear(e);
+
+    exit(1);
+}
+
+
 void key_generation()
 {
     // 2 Large primes
@@ -135,42 +162,37 @@ void key_generation()
     mpz_init(n);
 
 
-    mpz_set_ui(p, 61);
-    mpz_set_ui(q, 53);
+    // mpz_set_ui(p, 3);
+    // mpz_set_ui(q, 5);
     //large_prime_generator(p, 20);
     //large_prime_generator(q, 15);
+
+    // prompt user for primes:
+    printf("Enter a prime number p: ");
+    mpz_inp_str(p, stdin, 10);
+    printf("\nEnter a prime number q: ");
+    mpz_inp_str(q, stdin, 10);
 
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
 
-    // Need to calculate lambda(n)
-    // λ(n) = lcm(p - 1,q - 1)
-    // lcm(a,b)=|ab|/gcd(a,b)
+
+    // Calculate lambda euler func.
     mpz_t lambda;
     mpz_init(lambda);
-    lambda_function(lambda, p, q);
+    lambda_euler_function(lambda, p, q);
 
-    printf("Lambda: ");
-    mpz_out_str(stdout, 10, lambda);
-    printf("\n");
 
-    // Need to choose a prime "e" where e%lambda(n) != 0 && (gcd(e, lambda) == 1)
-    // 1 < e < lambda
+    // Choose an e. Prime and larger than lambda.
+    mpz_init(e);   
+    forge_e_iteratively(e, lambda);
 
-    // @todo GENERATE e value.
-
-    mpz_init(e);
-    mpz_set_ui(e, 17);
-
+  
     // Calculate d : modular inverse of(e, lambda)
-
-
     mpz_init(d);
-    mpz_powm_ui(d, e, -1, lambda);
+    mpz_invert(d, e, lambda);
 
-    printf("d: ");
-    mpz_out_str(stdout, 10, d);
-    printf("\n");
+
     // public key: (n, d)
     // private key: (n, e)
 
@@ -206,10 +228,12 @@ void key_generation()
 
 void encryption()
 {
-    FILE* fin;
+    FILE* fk;
 
-    fin = fopen(k, "r");
+    fk = fopen(k, "r");
 
+
+    // Fetch the keys.
     char buffer[500];
     char n[200];
     char e[200];
@@ -221,7 +245,7 @@ void encryption()
     int n_flag2 = 0;
 
 
-    while ((ch = fgetc(fin)) != EOF)
+    while ((ch = fgetc(fk)) != EOF)
     {
         if (ch != EOF)
         {
@@ -248,20 +272,48 @@ void encryption()
             } 
         }
     }
+
+    // print keys
     printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, e);
+    fclose(fk);
+
+
+    // Fetch the plain_text from input.
+    FILE* fin;
+
+    fin = fopen(in, "r");
+    char plaintext[200];
+    char c;
+    i = 0;
+
+    while ((c = fgetc(fin)) != EOF)
+    {
+        if (c != EOF)
+        {
+            plaintext[i++] = c;
+        }
+    }
+
+    // print plaintext
+    printf("PLAINTEXT:\n%s", plaintext);
     fclose(fin);
 
 
-
     // encrypt.
-
-    char* cipher = encrypt();
+    //char* cipher = encrypt();
 
 
     FILE* fout;
     fout = fopen(out, "w");
     
-    
+    // print cipher
+    //printf("CIPHER:\n%s", cipher);
+
+    //fprintf(fout, "%s", cipher);
+
+    //free(cipher);
+
+    fflush(stdout);
     fclose(fout);
 }
 
@@ -294,14 +346,15 @@ char* decrypt(char *cipher, unsigned long int prKey, unsigned long int n)
     return cipher;
 }
 void decryption()
-{
-    FILE* fin;
+{FILE* fk;
 
-    fin = fopen(k, "r");
+    fk = fopen(k, "r");
 
-    char buffer[2400];
-    char n[1600];
-    char e[1600];
+
+    // Fetch the keys.
+    char buffer[512];
+    char n[256];
+    char d[256];
     char ch;
     int i = 0;
     int j = 0;
@@ -310,7 +363,7 @@ void decryption()
     int n_flag2 = 0;
 
 
-    while ((ch = fgetc(fin)) != EOF)
+    while ((ch = fgetc(fk)) != EOF)
     {
         if (ch != EOF)
         {
@@ -333,25 +386,52 @@ void decryption()
             }   
             if (n_flag2)
             {
-                e[k++] = ch;
-            }
-
+                d[k++] = ch;
+            } 
         }
     }
-    printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, e);
+
+    // print keys
+    printf("K:\n%s\nN:\n%s\nE:\n%s\n", buffer, n, d);
+    fclose(fk);
+
+
+    // Fetch the plain_text from input.
+    FILE* fin;
+
+    fin = fopen(in, "r");
+    char cipher[200];
+    char c;
+    i = 0;
+
+    while ((c = fgetc(fin)) != EOF)
+    {
+        if (c != EOF)
+        {
+            cipher[i++] = c;
+        }
+    }
+
+    // print plaintext
+    printf("PLAINTEXT:\n%s", cipher);
     fclose(fin);
 
 
-
-    // decrypt.
-
-    char plain_text[200];
+    // encrypt.
+    //char* plaintext = decrypt();
 
 
     FILE* fout;
     fout = fopen(out, "w");
     
-    
+    // print cipher
+    //printf("CIPHER:\n%s", plaintext);
+
+    //fprintf(fout, "%s", plaintext);
+
+    //free(plaintext);
+
+    fflush(stdout);
     fclose(fout);
 }
 
