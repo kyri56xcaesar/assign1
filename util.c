@@ -221,6 +221,10 @@ void lambda_function(mpz_t l, mpz_t p, mpz_t q)
 
 }
 
+
+/*
+
+*/
 void lambda_euler_function(mpz_t l, mpz_t p, mpz_t q)
 {
     // λ(n) = lcm(p - 1,q - 1)
@@ -241,21 +245,17 @@ void lambda_euler_function(mpz_t l, mpz_t p, mpz_t q)
     // setup |(p-1)(q-1)|
     mpz_mul(l, p_1, q_1);
 
-    printf("\n");
-    mpz_out_str(stdout, 10 , p_1);
-    printf(" * ");
-    mpz_out_str(stdout, 10, q_1);
-    printf(" = ");
-    mpz_out_str(stdout, 10, l);
-    printf("\n");
-
 
     mpz_clear(p_1);
     mpz_clear(q_1);
 
 }
 
-void forge_d_iteratively(mpz_t d, mpz_t lambda)
+
+/*
+    ...
+*/
+void forge_d_key(mpz_t d, mpz_t lambda)
 {
     // Searching for a large number d < lambda which is relatively prime to lambda
     // tmp value to hold d

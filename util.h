@@ -26,4 +26,4 @@ size_t gcd(size_t a, size_t b);
 void large_prime_generator(mpz_t prime, int digits);
 void lambda_function(mpz_t lambda, mpz_t p, mpz_t q);
 void lambda_euler_function(mpz_t lambda, mpz_t p, mpz_t q);
-void forge_d_iteratively(mpz_t e, mpz_t lambda);
+void forge_d_key(mpz_t e, mpz_t lambda);

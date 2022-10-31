@@ -136,7 +136,7 @@ int main(int argv, char *argc[])
             if (argc[i][1] == 'g')
             {
                 // perform key pair generation
-                printf("Preparing keys...\n\n\n");
+                printf("Preparing keys...\n\n");
                 key_generation();
                 printf("Keys ready.\n");
             }
@@ -243,33 +243,41 @@ void key_generation()
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
 
+    /*
     printf("\nn: ");
     mpz_out_str(stdout, 10, n);
     printf("\n");
-
+    */
 
     // Calculate lambda euler func.
     mpz_t lambda;
     mpz_init(lambda);
     lambda_euler_function(lambda, p, q);
 
+    /*
     printf("\nλ(n)= :");
     mpz_out_str(stdout, 10, lambda);
-
+    */
 
     // Choose an e. Prime and larger than lambda.
     mpz_init(d);   
-    forge_d_iteratively(d, lambda);
+    forge_d_key(d, lambda);
+    
+    /*
     printf("\nd: ");
     mpz_out_str(stdout, 10, d);
     printf("\n");
-  
+    */
+
     // Calculate d : modular inverse of(e, lambda)
     mpz_init(e);
     mpz_invert(e, d, lambda);
+    
+    /*
     printf("\ne: ");
     mpz_out_str(stdout, 10, e);
     printf("\n");
+    */
 
     // public key: (n, d)
     // private key: (n, e)
@@ -290,7 +298,7 @@ void key_generation()
 
         destruct();
     }
-
+ 
     fprintf(fp1, "(");
     mpz_out_str(fp1, 10, n);
     fprintf(fp1,",");
@@ -303,6 +311,9 @@ void key_generation()
     fprintf(fp2,",");
     mpz_out_str(fp2, 10, d);
     fprintf(fp2,")");
+    
+    
+    
     fflush(fp2);
     
     fclose(fp1);
@@ -384,7 +395,7 @@ void encryption()
 
 
     // print keys
-    printf("keys: %s\nn: %s\ne: %s\n", keys, n, e);
+    //printf("keys: %s\tn: %s\te: %s\n", keys, n, e);
     fclose(fk);
 
     free(keys); 
@@ -403,7 +414,7 @@ void encryption()
     }
 
 
-    char plaintext[200];
+    char plaintext[MAX_BUFFER];
     char c;
     i = 0;
 
@@ -416,10 +427,12 @@ void encryption()
     }
     i--;
 
+
     int size = i;
 
     // print plaintext
-    printf("PLAINTEXT: %s", plaintext);
+    //printf("PLAINTEXT: %s", plaintext);
+    
     fclose(fin);
 
     // create mpz_t numbers;
@@ -438,8 +451,8 @@ void encryption()
 
       
     // print cipher
-    printf("CIPHER: ");
-    print_cipher(cipher, size);
+    //printf("CIPHER: ");
+    //print_cipher(cipher, size);
 
 
 
@@ -629,7 +642,7 @@ void decryption()
         keys[j] = buffer[j];
     }
     // print keys
-    printf("keys: %s\nn: %s\ne: %s\n", keys, n, d);
+    //printf("keys: %s\nn: %s\ne: %s\n", keys, n, d);
     fclose(fk);
 
     free(keys); 
@@ -663,7 +676,7 @@ void decryption()
     }
     
     // print cipher
-    printf("PLAINTEXT:%s\n", plaintext);
+    //printf("DECIPHER:%s\n", plaintext);
 
     fprintf(fout, "%s", plaintext);
 
