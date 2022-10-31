@@ -50,13 +50,12 @@ char *out;
 char *k;
 
 void print_cipher(size_t *cihper, int size);
-void write_cipher(size_t *cipher, int size, char *out);
 void destruct();
 void key_generation();
 void encryption();
 void decryption();
-size_t* encrypt(size_t* cipher, char *plaintext, size_t size, mpz_t puKey, mpz_t n);
-char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n);
+size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n);
+char* decrypt(mpz_t prKey, mpz_t n);
 
 /*
     Helper function. Prints -h menu
@@ -262,7 +261,7 @@ void key_generation()
     {
         printf("Error opening a file. Program will now terminate...\n");
 
-        exit(1);
+        destruct();
     }
 
     fprintf(fp1, "(");
@@ -297,7 +296,7 @@ void encryption()
     {
         printf("Error opening file. Program will exit...\n");
 
-        exit(1);
+        destruct();
     }
 
 
@@ -373,7 +372,7 @@ void encryption()
     {
         printf("Error opening file. Program will exit...\n");
 
-        exit(1);
+        destruct();
     }
 
 
@@ -407,22 +406,14 @@ void encryption()
     mpz_set_str(nkey, n, 10);
 
     size_t* cipher = (size_t*)malloc(sizeof(size_t)*size);
-    printf("size:%d %ld\n", size, sizeof(size_t)*size);
     // encrypt.
     cipher = encrypt(cipher, plaintext, size, ekey, nkey);
 
-
-    //printf("%ld\n", sizeof(cipher[0])+sizeof(cipher[1])+sizeof(cipher[2])+sizeof(cipher[3]));
-
-   
-    
+      
     // print cipher
     printf("CIPHER: ");
     print_cipher(cipher, size);
 
-    // write cipher to file
-    //fprintf(fout, "%s", cipher);
-    //write_cipher(cipher, size, out);
 
 
     mpz_clear(nkey);
@@ -449,36 +440,6 @@ void print_cipher(size_t *cipher, int size)
     printf("\n");
 }
 
-/*
-    Helper function in order to write a size_t in a file.
-*/
-void write_cipher(size_t *cipher, int size, char *file)
-{
-    FILE *fp;
-
-    fp = fopen(file, "wb");
-    if (fp == NULL)
-    {
-        printf("Error opening file. Program will exit...\n");
-
-        exit(1);
-    }
-
-    int i;
-    cipher_byte_size = size * 8;
-
-    // zero pad
-
-    
-    // store as bytes
-    //fwrite(cipher, sizeof(size_t), size, fp);
-    
-    for (i = 0; i < size; i++)
-    {
-        //fwrite(cipher, sizeof(size_t), size, fp);
-        fprintf(fp, "%lu\n", (uint64_t)cipher[i]);
-    }
-}
 
 size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n)
 {
@@ -491,55 +452,85 @@ size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n)
 
 
  
-    
 
-    int dummy;
+    size_t buffer[8];
+
+    FILE *fp ;
+    fp = fopen(out, "wb");
+    if (fp == NULL)
+    {
+        printf("Error opening file. Program will exit...\n");
+
+        destruct();
+    }
 
     for (i = 0; i < size; i ++)
     {
         mpz_set_ui(ch, plaintext[i]);
         mpz_powm(powm, ch, puKey, n);
         
-        //cipher[i] = (uint64_t)mpz_get_ui(powm);
-        mpz_export(cipher, NULL, 1, 8, 0, 0, powm);
+        cipher[i] = (uint64_t)mpz_get_ui(powm);
+        mpz_export(buffer, NULL, 1, 8, 0, 0, powm);
 
-        printf("Prompt to wait. continue?\n");
-        scanf("%d", &dummy);
+        fwrite(buffer, 8, 1, fp);
+
+   
 
     }
 
+
+    fclose(fp);
     mpz_clear(ch);
     mpz_clear(powm);
 
     return cipher;
 }
 
-char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n)
+char* decrypt(mpz_t prKey, mpz_t n)
 {
-    if (cipher == NULL)
-    {
-        return NULL;
-    }
 
     int i;
 
-    char* plaintext = (char*)malloc(sizeof(char) *size/8);
-   
     mpz_t ch;
     mpz_init(ch);
     mpz_t powm;
     mpz_init(powm);
 
 
-    for (i = 0; i < size; i ++)
+
+    FILE *fp;
+    fp = fopen(in, "rb");
+    if (fp == NULL)
     {
-        mpz_set_ui(ch, cipher[i]);
+        printf("Error opening file. Program will exit...\n");
+
+        destruct();
+    }
+
+    fseek(fp, 0, SEEK_END);
+    unsigned long int size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+
+    size_t buffer[8];
+    // Caller must free.
+    char* plaintext = (char*)malloc(sizeof(char) *size/8);
+
+    for (i = 0; i < size/8; i ++)
+    {
+        fread(buffer, 8, 1, fp);
+        mpz_import(ch, 1, 1, 8, 0, 0, buffer);
+
         mpz_powm(powm, ch, prKey, n);
         plaintext[i] = mpz_get_ui(powm);
     }
 
+
+    fclose(fp);
     mpz_clear(ch);
     mpz_clear(powm);
+
+    
 
     return plaintext;
 }
@@ -552,7 +543,7 @@ void decryption()
     {
         printf("Error opening file. Program will exit...\n");
 
-        exit(1);
+        destruct();
     }
 
 
@@ -617,32 +608,12 @@ void decryption()
     free(keys); 
     remove(buffer);
 
-    // Fetch the cipher from input.
-    FILE* fin;
-
-    fin = fopen(in, "r");
-    if (fin == NULL)
-    {
-        printf("Error opening file. Program will exit...\n");
-
-        exit(1);
-    }
-
-    size_t cipher[cipher_byte_size];
-    fseek(fin, 0, SEEK_SET);
-
-    fread(cipher, sizeof(size_t), cipher_byte_size/8, fin);
-    
-    fclose(fin);
 
 
-    printf("CIPHER: ");
-    print_cipher(cipher, i);
 
-    // create mpz_t numbers;
+    // create mpz_t numbers from keys;
     mpz_t dkey;
     mpz_t nkey;
-
     mpz_init(dkey);
     mpz_init(nkey);
 
@@ -650,16 +621,18 @@ void decryption()
     mpz_set_str(nkey, n, 10);
 
     // encrypt.
-    char* plaintext = decrypt(cipher, i, dkey, nkey);
+    char* plaintext = decrypt(dkey, nkey);
 
+    
 
+    // Write deciphered to output.
     FILE* fout;
     fout = fopen(out, "w");
     if (fout == NULL)
     {
         printf("Error opening file. Program will exit...\n");
 
-        exit(1);
+        destruct();
     }
     
     // print cipher
@@ -668,6 +641,7 @@ void decryption()
     fprintf(fout, "%s", plaintext);
 
 
+    // Clean up
     mpz_clear(nkey);
     mpz_clear(dkey);
     free(plaintext);
