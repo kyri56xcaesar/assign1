@@ -299,6 +299,8 @@ void key_generation()
         destruct();
     }
  
+
+    // Write to file
     fprintf(fp1, "(");
     mpz_out_str(fp1, 10, n);
     fprintf(fp1,",");
@@ -323,7 +325,12 @@ void key_generation()
 
 
 /*
-    Function to configure encryption mechanism of a plain text.
+    Encryption handler method.
+    Function to configure encryption mechanism and data setup for encrypt() method to encrypt.
+
+    This method does not write directly to a file.
+
+    Has option to print cipher as text in stdout.
 */
 void encryption()
 {
@@ -446,7 +453,7 @@ void encryption()
     mpz_set_str(nkey, n, 10);
 
     size_t* cipher = (size_t*)malloc(sizeof(size_t)*size);
-    // encrypt.
+    // encrypt. Encrypt method responsible to write  the cipher.
     cipher = encrypt(cipher, plaintext, size, ekey, nkey);
 
       
@@ -480,7 +487,11 @@ void print_cipher(size_t *cipher, int size)
     printf("\n");
 }
 
-
+/*
+    Encryption method. Uses mpz_t numbers and functions.
+    Writes the encrypted cipher to the destination file.
+    Returns  a text version of the cipher.
+*/
 size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n)
 {
     
@@ -526,6 +537,17 @@ size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n)
     return cipher;
 }
 
+/*
+    Decryption method function.
+
+    Reads from binary input the cipher.
+
+    Uses mpz_t numbers and function to decrypt it
+
+    Allocated memory for the decipher and returns it.
+
+    @CALLER must free the decipher.
+*/
 char* decrypt(mpz_t prKey, mpz_t n)
 {
 
@@ -574,6 +596,15 @@ char* decrypt(mpz_t prKey, mpz_t n)
 
     return plaintext;
 }
+
+/*
+    Decryption Handler method.
+
+    Sets up the data needed to perform decryption and calls decrypt
+
+    This method writes to file the decrypted message.
+    and handles freeing it
+*/
 void decryption()
 {
     FILE* fk;
@@ -693,7 +724,9 @@ void decryption()
 
 
 
-
+/*
+    Helper function for argument -h.
+*/
 void HELP()
     {
         fprintf(stdout, "Options:\n\

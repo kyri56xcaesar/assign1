@@ -75,16 +75,22 @@ int main(int argv, char* argc[])
                 output = argc[i + 1];
             }
 
-            if (argc[i][1] == 'g')
-            {
-                g = atof(argc[i + 1]);
-            }
-
             if (argc[i][1] == 'p')
             {
                 p = atof(argc[i + 1]);
+                if (!checkIfPrime(p))
+                {
+                    printf("False input. G is not a prime!.\n");
 
-                if (!checkIfPrimitiveRoot(p, g))
+                    exit(1);
+                }
+            }
+
+            if (argc[i][1] == 'g')
+            {
+                g = atof(argc[i + 1]);
+
+                if (!checkIfPrimitiveRoot(getPrevPrime(p), g))
                 {
                     printf("False input. P is not a primitive root of G\n");
 
@@ -125,8 +131,8 @@ int main(int argv, char* argc[])
     // check
     if (discoverSecret(B, a) != discoverSecret(A, b))
     {
-        printf("Error...\n");
-        //exit(1);
+        printf("Error... not matching common key!\n");
+        exit(1);
     }
 
 
@@ -138,12 +144,12 @@ int main(int argv, char* argc[])
         exit(1);
     }
 
-
+    // save to a file
     fprintf(fp, "<%lld>,<%lld>,<%lld>", A, B, KEY);
 
     fflush(fp);
 
-    print_Data(fp, output);
+    //print_Data(fp, output);
 
     
 
@@ -154,20 +160,28 @@ int main(int argv, char* argc[])
 }
 
 
-
+/*
+    Do the math to calculate the secret key.
+*/
 long long int discoverSecret(long long int pKey, long long int sKey)
 {
     return fmod(pow(pKey, sKey), p);
 }
+/*
+    Do the math to calculate the public key.
+*/
 long long int createPublicKey(long long int sKey)
 {
     return fmod(pow(g, sKey), p);
 }
 
 
+/*
+    Helper function for -h argument.
+*/
 void HELP(){
     fprintf(stdout, "Options:\n\
-     \t-o path Path to outpout file\n\
+     \t-o path Path to output file\n\
      \t-p number Prime number\n\
      \t-g number Primitive Root for previous prime number\n\
      \t-a number Private key A\n\
@@ -175,11 +189,18 @@ void HELP(){
      \t-h This hellp message.\n");
 }
 
+
+/*
+    print data directly to stdout.
+*/
 void printData()
 {
     fprintf(stdout, "o: %s\np:%lld\ng:%lld\na:%lld\nb:%lld\n", output, p, g, a, b);
 }
 
+/*
+    print data to stdout from a file.
+*/
 void print_Data(FILE *fp, char *filename)
 {
     printf("\n");
@@ -195,7 +216,7 @@ void print_Data(FILE *fp, char *filename)
 
     char ch;
     
-    char buffer[100];
+    char buffer[1000];
     int i=0;
     
     while ((ch = fgetc(fp)) != EOF)
@@ -203,9 +224,11 @@ void print_Data(FILE *fp, char *filename)
         if (ch != EOF)
         {
             buffer[i++] = ch;
+            //printf("%c",ch);
         }
     }
-    
+    buffer[i] = '\0';
+
     printf("%s\n", buffer);
 
     printf("\n");
