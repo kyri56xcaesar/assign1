@@ -586,6 +586,7 @@ char* decrypt(mpz_t prKey, mpz_t n)
         mpz_powm(powm, ch, prKey, n);
         plaintext[i] = mpz_get_ui(powm);
     }
+    plaintext[i] = '\0';
 
 
     fclose(fp);
@@ -708,6 +709,7 @@ void decryption()
     
     // print cipher
     //printf("DECIPHER:%s\n", plaintext);
+
 
     fprintf(fout, "%s", plaintext);
 

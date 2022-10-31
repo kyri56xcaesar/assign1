@@ -20,7 +20,8 @@ After compilation:
 
 
 ----> NOTE that everything is connected via files. Printing to console has been commented. Yet available to be uncommented.
-
+---- FOR RSA TOOL. YOU MUST CREATE AN INPUT FILE WITH YOUR PLAINTEXT.
+---- input.txt => "ITS ALL GREEK TO ME" may be provided as demo.
 
 
 ** DEPENDENCIES **
@@ -66,7 +67,7 @@ Before encryption or decryption options. Input output and key paths must be prov
 
 **minor bug**
 
-after the decipher a garbage character may be printed. (not fixed due to deadline)
+-- FIXED
 
 
 
