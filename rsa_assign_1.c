@@ -41,20 +41,47 @@ Options:
 
 */
 
-mpz_t n;
-mpz_t d;
-mpz_t e;
+mpz_t n;    // mpz_t type number to hold n key
+mpz_t d;    // mpz_t type number to hold d key
+mpz_t e;    // mpz_t type number to hold e key
 
-char *in;
-char *out;
-char *k;
+char *in;   // string to hold given input path
+char *out;  // string to hold given output path
+char *k;    // string to hold given key path
 
+
+/*
+    Prints cipher to stdout.
+*/
 void print_cipher(size_t *cihper, int size);
+/*
+    Exit function. Fixes loose ends
+*/
 void destruct();
+
+/*
+    keys generation
+*/
 void key_generation();
+/*
+    encryption of input
+*/
 void encryption();
+
+/*
+    decryption of input
+*/
 void decryption();
+
+/*
+    where encryption actually happens and is written to output.
+*/
 size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n);
+
+/*
+    where decryption actually happens. It's not written to output directly this time.
+    Caller must free @return value afterwards he is done with it.
+*/
 char* decrypt(mpz_t prKey, mpz_t n);
 
 /*
@@ -623,7 +650,7 @@ void decryption()
     // encrypt.
     char* plaintext = decrypt(dkey, nkey);
 
-    
+
 
     // Write deciphered to output.
     FILE* fout;

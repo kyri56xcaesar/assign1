@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "util.h"
 #include <assert.h>
 #include <gmp.h>
