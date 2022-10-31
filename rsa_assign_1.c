@@ -2,7 +2,13 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include "util.h"
+#include <inttypes.h>
 
+
+#define MAX_BUFFER 512
+#define MAX_CIPHER 4096
+
+long long int cipher_byte_size=0;
 
 /*
 Key generation:
@@ -49,11 +55,17 @@ void destruct();
 void key_generation();
 void encryption();
 void decryption();
-size_t* encrypt(char *plaintext, size_t size, mpz_t puKey, mpz_t n);
+size_t* encrypt(size_t* cipher, char *plaintext, size_t size, mpz_t puKey, mpz_t n);
 char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n);
 
+/*
+    Helper function. Prints -h menu
+*/
 void HELP();
 
+/*
+    Configure arguments.
+ */
 int main(int argv, char *argc[])
 {
 
@@ -143,6 +155,9 @@ int main(int argv, char *argc[])
     return 0;
 }
 
+/*
+    Exit  function. Frees memory before exiting with error.
+*/
 void destruct()
 {
     mpz_clear(n);
@@ -153,6 +168,11 @@ void destruct()
 }
 
 
+/*
+    Function that will generate all the necessary keys and values for RSA encryption.
+
+    Called upon -g
+*/
 void key_generation()
 {
     // 2 Large primes
@@ -207,19 +227,22 @@ void key_generation()
     mpz_init(lambda);
     lambda_euler_function(lambda, p, q);
 
+    printf("\nλ(n)= :");
+    mpz_out_str(stdout, 10, lambda);
+
 
     // Choose an e. Prime and larger than lambda.
-    mpz_init(e);   
-    forge_e_iteratively(e, lambda);
-    printf("\ne: ");
-    mpz_out_str(stdout, 10, e);
+    mpz_init(d);   
+    forge_d_iteratively(d, lambda);
+    printf("\nd: ");
+    mpz_out_str(stdout, 10, d);
     printf("\n");
   
     // Calculate d : modular inverse of(e, lambda)
-    mpz_init(d);
-    mpz_invert(d, e, lambda);
-    printf("\nd: ");
-    mpz_out_str(stdout, 10, d);
+    mpz_init(e);
+    mpz_invert(e, d, lambda);
+    printf("\ne: ");
+    mpz_out_str(stdout, 10, e);
     printf("\n");
 
     // public key: (n, d)
@@ -261,6 +284,10 @@ void key_generation()
     
 }
 
+
+/*
+    Function to configure encryption mechanism of a plain text.
+*/
 void encryption()
 {
     FILE* fk;
@@ -275,7 +302,7 @@ void encryption()
 
 
     // Fetch the keys.
-    char buffer[500];
+    char buffer[MAX_BUFFER];
     char *n;
     char *e;
     char ch;
@@ -322,9 +349,20 @@ void encryption()
         }
     }
 
+    char *keys = (char*) malloc(sizeof(char)*i);
+    j=0;
+    for (j = 0; j < i; j++)
+    {
+        keys[j] = buffer[j];
+    }
+
+
     // print keys
-    printf("buffer: %s\nn: %s\ne: %s\n", buffer, n, e);
+    printf("keys: %s\nn: %s\ne: %s\n", keys, n, e);
     fclose(fk);
+
+    free(keys); 
+    remove(buffer);
 
 
     // Fetch the plain_text from input.
@@ -352,11 +390,11 @@ void encryption()
     }
     i--;
 
+    int size = i;
+
     // print plaintext
     printf("PLAINTEXT: %s", plaintext);
     fclose(fin);
-
-    printf("Size of plain text is: %d\n", i);
 
     // create mpz_t numbers;
     mpz_t ekey;
@@ -368,20 +406,23 @@ void encryption()
     mpz_set_str(ekey, e, 10);
     mpz_set_str(nkey, n, 10);
 
+    size_t* cipher = (size_t*)malloc(sizeof(size_t)*size);
+    printf("size:%d %ld\n", size, sizeof(size_t)*size);
     // encrypt.
-    size_t* cipher = encrypt(plaintext, i, ekey, nkey);
+    cipher = encrypt(cipher, plaintext, size, ekey, nkey);
 
+
+    //printf("%ld\n", sizeof(cipher[0])+sizeof(cipher[1])+sizeof(cipher[2])+sizeof(cipher[3]));
 
    
     
     // print cipher
-    //printf("CIPHER:\n%s", cipher);
-    int size = i;
+    printf("CIPHER: ");
     print_cipher(cipher, size);
 
     // write cipher to file
     //fprintf(fout, "%s", cipher);
-    write_cipher(cipher, size, out);
+    //write_cipher(cipher, size, out);
 
 
     mpz_clear(nkey);
@@ -393,23 +434,29 @@ void encryption()
  
 }
 
+/*
+    Helper function in order to print a size_t cipher in stdout.
+*/
 void print_cipher(size_t *cipher, int size)
 {
     int i;
 
     for (i = 0; i < size; i++)
     {
-        printf("%lu ", cipher[i]);
+        printf("%"PRIu64" ", (uint64_t)cipher[i]);
     }
 
     printf("\n");
 }
 
+/*
+    Helper function in order to write a size_t in a file.
+*/
 void write_cipher(size_t *cipher, int size, char *file)
 {
     FILE *fp;
 
-    fp = fopen(file, "w");
+    fp = fopen(file, "wb");
     if (fp == NULL)
     {
         printf("Error opening file. Program will exit...\n");
@@ -418,35 +465,46 @@ void write_cipher(size_t *cipher, int size, char *file)
     }
 
     int i;
+    cipher_byte_size = size * 8;
 
+    // zero pad
+
+    
+    // store as bytes
+    //fwrite(cipher, sizeof(size_t), size, fp);
+    
     for (i = 0; i < size; i++)
     {
-        fprintf(fp, "%ld", cipher[i]);
+        //fwrite(cipher, sizeof(size_t), size, fp);
+        fprintf(fp, "%lu\n", (uint64_t)cipher[i]);
     }
 }
 
-size_t* encrypt(char *plaintext, size_t size, mpz_t puKey, mpz_t n)
+size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n)
 {
-    if (plaintext == NULL)
-    {
-        return NULL;
-    }
-
-    int i;
-
-    size_t* cipher = (size_t *)malloc(sizeof(size_t) * size);
     
+    int i; 
     mpz_t ch;
     mpz_init(ch);
     mpz_t powm;
     mpz_init(powm);
 
 
+ 
+    
+
+    int dummy;
+
     for (i = 0; i < size; i ++)
     {
         mpz_set_ui(ch, plaintext[i]);
         mpz_powm(powm, ch, puKey, n);
-        cipher[i] = mpz_get_ui(powm);
+        
+        //cipher[i] = (uint64_t)mpz_get_ui(powm);
+        mpz_export(cipher, NULL, 1, 8, 0, 0, powm);
+
+        printf("Prompt to wait. continue?\n");
+        scanf("%d", &dummy);
 
     }
 
@@ -477,9 +535,11 @@ char* decrypt(size_t *cipher, size_t size, mpz_t prKey, mpz_t n)
     {
         mpz_set_ui(ch, cipher[i]);
         mpz_powm(powm, ch, prKey, n);
-        cipher[i] = mpz_get_ui(powm);
-        //plaintext[i] = (char)fmod(pow(cipher[i], d), nn);
+        plaintext[i] = mpz_get_ui(powm);
     }
+
+    mpz_clear(ch);
+    mpz_clear(powm);
 
     return plaintext;
 }
@@ -497,7 +557,7 @@ void decryption()
 
 
     // Fetch the keys.
-    char buffer[500];
+    char buffer[MAX_BUFFER];
     char *n;
     char *d;
     char ch;
@@ -544,10 +604,18 @@ void decryption()
         }
     }
 
+    char *keys = (char*) malloc(sizeof(char)*i);
+    j=0;
+    for (j = 0; j < i; j++)
+    {
+        keys[j] = buffer[j];
+    }
     // print keys
-    printf("buffer: %s\nn: %s\ne: %s\n", buffer, n, d);
+    printf("keys: %s\nn: %s\ne: %s\n", keys, n, d);
     fclose(fk);
 
+    free(keys); 
+    remove(buffer);
 
     // Fetch the cipher from input.
     FILE* fin;
@@ -560,20 +628,16 @@ void decryption()
         exit(1);
     }
 
-    size_t cipher[200];
-    char c;
-    i = 0;
+    size_t cipher[cipher_byte_size];
+    fseek(fin, 0, SEEK_SET);
 
-    while ((c = fgetc(fin)) != EOF)
-    {
-        if (c != EOF)
-        {
-            cipher[i++] = c;
-        }
-    }
+    fread(cipher, sizeof(size_t), cipher_byte_size/8, fin);
     
     fclose(fin);
 
+
+    printf("CIPHER: ");
+    print_cipher(cipher, i);
 
     // create mpz_t numbers;
     mpz_t dkey;
@@ -599,7 +663,7 @@ void decryption()
     }
     
     // print cipher
-    printf("PLAINTEXT:\n%s", plaintext);
+    printf("PLAINTEXT:%s\n", plaintext);
 
     fprintf(fout, "%s", plaintext);
 

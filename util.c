@@ -241,7 +241,13 @@ void lambda_euler_function(mpz_t l, mpz_t p, mpz_t q)
     // setup |(p-1)(q-1)|
     mpz_mul(l, p_1, q_1);
 
- 
+    printf("\n");
+    mpz_out_str(stdout, 10 , p_1);
+    printf(" * ");
+    mpz_out_str(stdout, 10, q_1);
+    printf(" = ");
+    mpz_out_str(stdout, 10, l);
+    printf("\n");
 
 
     mpz_clear(p_1);
@@ -249,19 +255,19 @@ void lambda_euler_function(mpz_t l, mpz_t p, mpz_t q)
 
 }
 
-void forge_e_iteratively(mpz_t e, mpz_t lambda)
+void forge_d_iteratively(mpz_t d, mpz_t lambda)
 {
-    // Searching for a large number e which is relatively prime to lambda
-    // tmp value to hold e
+    // Searching for a large number d < lambda which is relatively prime to lambda
+    // tmp value to hold d
     mpz_t tmp;
     mpz_init(tmp);
     
-    // Prerquisites are e % lambda != 0 && gcd(e, lambda)==1 
-    // e mod lambda
+    // Prerquisites are d % lambda != 0 && gcd(d, lambda)==1 
+    // d mod lambda
     mpz_t mod;
     mpz_init(mod);
 
-    // gcd (e, lambda)
+    // gcd (d, lambda)
     mpz_t gcd;
     mpz_init(gcd);
 
@@ -275,7 +281,7 @@ void forge_e_iteratively(mpz_t e, mpz_t lambda)
     mpz_init(op);
 
 
-    mpz_mul_ui(op, lambda, 2);
+    mpz_cdiv_q_ui(op, lambda, 7);
   
 
     
@@ -298,7 +304,7 @@ void forge_e_iteratively(mpz_t e, mpz_t lambda)
         if (mod_is_not_zero != 0 &&  gcd_is_one== 0)
         {
 
-            mpz_set(e, tmp);
+            mpz_set(d, tmp);
        
             break;
         }
