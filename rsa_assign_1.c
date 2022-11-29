@@ -10,36 +10,7 @@
 
 long long int cipher_byte_size=0;
 
-/*
-Key generation:
-    
-    1. Give from the command line 2 numbers. Let's name them p and q.
-    2. Calculate if these 2 numbers are primes or not.
-    3. If they are, compute n where n = p * q.
-    4. Calculate lambda(n) where lambda(n) = (p - 1) * (q - 1). This is Euler’s totient
-        function, described in the original RSA paper "A Method for Obtaining Digital
-        Signatures and Public-Key Cryptosystems”. You may find out that other
-        implementations use different totient functions. However, for this implementation,
-        we are going to use Euler’s.
-    5. Choose a prime e where (e % lambda(n) != 0) AND (gcd(e, lambda) == 1)
-        where gcd() is the Greatest Common Denominator.
-    6. Choose d where d is the modular inverse of (e, lambda).
-    7. The public key consists of n and d, in this order.
-    8. The private key consists of n and e, in this order.
 
-
-
-Options:
-    -i path Path to the input file
-    -o path Path to the output file
-    -k path Path to the key file
-    -g Perform RSA key-pair generation
-    -d Decrypt input and store results to output
-    -e Encrypt input and store results to output
-    -h This help message
-
-
-*/
 
 mpz_t n;    // mpz_t type number to hold n key
 mpz_t d;    // mpz_t type number to hold d key
@@ -84,108 +55,10 @@ size_t* encrypt(size_t* cipher, char *plaintext, int size, mpz_t puKey, mpz_t n)
 */
 char* decrypt(mpz_t prKey, mpz_t n);
 
-/*
-    Helper function. Prints -h menu
-*/
-void HELP();
 
 /*
     Configure arguments.
  */
-int main(int argv, char *argc[])
-{
-
-    if (argv < 2)
-    {
-        HELP();
-
-        exit(0);
-    }
-  
-    int i = 0;
-
-    for (i = 1; i < argv; i++)
-    {
-        if (argc[i][0] == '-' && argc[i][1] == 'h')
-        {
-            HELP();
-
-            exit(0);
-        }
-    }
-
-    for (i = 1; i < argv; i++)
-    {
-        if (argc[i][0] == '-')
-        {
-            if (argc[i][1] == 'i')
-            {
-                in = argc[i + 1];
-                printf("IN_FILE: %s\n", in);
-
-            }
-
-            if (argc[i][1] == 'o')
-            {
-                out = argc[i + 1];
-                printf("OUT_FILE: %s\n", out);
-
-            }
-
-            if (argc[i][1] == 'k')
-            {
-                k = argc[i + 1];
-            }
-
-            if (argc[i][1] == 'g')
-            {
-                // perform key pair generation
-                printf("Preparing keys...\n\n");
-                key_generation();
-                printf("Keys ready.\n");
-            }
-
-            if (argc[i][1] == 'd' && (in != NULL || out != NULL || k != NULL))
-            {
-                //if (k[1] == 'r')
-                    decryption();
-                //else
-                //{
-                //    printf("Must obtain a private key in order to decrypt!.\n");
-
-                    //destruct();
-                //}
-                
-
-            }
-
-
-            if (argc[i][1] == 'e' && (in != NULL || out != NULL || k != NULL))
-            {
-                //if (k[1] == 'u')
-
-                    printf("KEY_FILE: %s\n", k);
-                    encryption();
-                //else
-                //{
-                    //printf("Must obtain a public key in order to ecnrypt!.\n");
-
-                //   destruct();
-                //}
-            }
-
-        }
-           
-    }
-
-      
-
-    mpz_clear(n);
-    mpz_clear(d);
-    mpz_clear(e);
-
-    return 0;
-}
 
 /*
     Exit  function. Frees memory before exiting with error.
@@ -216,37 +89,7 @@ void key_generation()
     // n = p * q
     mpz_init(n);
 
-    //large_prime_generator(p, 20);
-    //large_prime_generator(q, 15);
-
-    // prompt user for primes:
-    /*int cs =0;
-    while(cs == 0)
-    {
-        printf("Enter a prime number p: ");
-        mpz_inp_str(p, stdin, 10);
     
-        cs = mpz_probab_prime_p(p, 20);
-        if (cs ==0)
-        {
-            printf("\nNot a prime. Pick again.\n");
-        }
-    }
-    cs = 0;
-    while(cs == 0)
-    {
-     
-        printf("\nEnter a prime number q: ");
-        mpz_inp_str(q, stdin, 10);   
-        cs = mpz_probab_prime_p(q, 20);
-        if (cs == 0)
-        {
-            printf("\nNot a prime. Pick again");
-        }
-    }
-    printf("\n");
-    */
-
     // SET KEYS  AS DEFAULT PRIMES
 
     mpz_set_ui(p, 17);
@@ -255,41 +98,22 @@ void key_generation()
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
 
-    /*
-    printf("\nn: ");
-    mpz_out_str(stdout, 10, n);
-    printf("\n");
-    */
-
+   
     // Calculate lambda euler func.
     mpz_t lambda;
     mpz_init(lambda);
     lambda_euler_function(lambda, p, q);
 
-    /*
-    printf("\nλ(n)= :");
-    mpz_out_str(stdout, 10, lambda);
-    */
-
+ 
     // Choose an e. Prime and larger than lambda.
     mpz_init(d);   
     forge_d_key(d, lambda);
     
-    /*
-    printf("\nd: ");
-    mpz_out_str(stdout, 10, d);
-    printf("\n");
-    */
-
+ 
     // Calculate d : modular inverse of(e, lambda)
     mpz_init(e);
     mpz_invert(e, d, lambda);
-    
-    /*
-    printf("\ne: ");
-    mpz_out_str(stdout, 10, e);
-    printf("\n");
-    */
+
 
     // public key: (n, d)
     // private key: (n, e)
