@@ -5,8 +5,8 @@
 #include <inttypes.h>
 
 
-#define MAX_BUFFER 512
-#define MAX_CIPHER 4096
+#define MAX_BUFFER 4096
+#define MAX_CIPHER 16384
 
 long long int cipher_byte_size=0;
 
@@ -121,11 +121,15 @@ int main(int argv, char *argc[])
             if (argc[i][1] == 'i')
             {
                 in = argc[i + 1];
+                printf("IN_FILE: %s\n", in);
+
             }
 
             if (argc[i][1] == 'o')
             {
                 out = argc[i + 1];
+                printf("OUT_FILE: %s\n", out);
+
             }
 
             if (argc[i][1] == 'k')
@@ -143,14 +147,14 @@ int main(int argv, char *argc[])
 
             if (argc[i][1] == 'd' && (in != NULL || out != NULL || k != NULL))
             {
-                if (k[1] == 'r')
+                //if (k[1] == 'r')
                     decryption();
-                else
-                {
-                    printf("Must obtain a private key in order to decrypt!.\n");
+                //else
+                //{
+                //    printf("Must obtain a private key in order to decrypt!.\n");
 
-                    destruct();
-                }
+                    //destruct();
+                //}
                 
 
             }
@@ -158,14 +162,16 @@ int main(int argv, char *argc[])
 
             if (argc[i][1] == 'e' && (in != NULL || out != NULL || k != NULL))
             {
-                if (k[1] == 'u')
-                    encryption();
-                else
-                {
-                    printf("Must obtain a public key in order to ecnrypt!.\n");
+                //if (k[1] == 'u')
 
-                    destruct();
-                }
+                    printf("KEY_FILE: %s\n", k);
+                    encryption();
+                //else
+                //{
+                    //printf("Must obtain a public key in order to ecnrypt!.\n");
+
+                //   destruct();
+                //}
             }
 
         }
@@ -214,7 +220,7 @@ void key_generation()
     //large_prime_generator(q, 15);
 
     // prompt user for primes:
-    int cs =0;
+    /*int cs =0;
     while(cs == 0)
     {
         printf("Enter a prime number p: ");
@@ -239,6 +245,12 @@ void key_generation()
         }
     }
     printf("\n");
+    */
+
+    // SET KEYS  AS DEFAULT PRIMES
+
+    mpz_set_ui(p, 17);
+    mpz_set_ui(q, 29);
 
     // Multiplication: n = p * q
     mpz_mul(n, p, q);
